@@ -1,13 +1,17 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { getAllProducts } from '@/services/productApi';
 import { Clock, Star, Store, Eye, ShoppingCart, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
+import { useCartStore } from '@/store/store';
+import Notification from '@/components/shared/Notification';
 
 export default function ProductSection({ categoryName = 'All', page = 1, onPageChange }) {
   const router = useRouter();
+  const addItem = useCartStore((state) => state.addItem);
+  const [notification, setNotification] = useState(null);
   const pageSize = 8; // Fetch 8 products per page for a balanced grid
 
   // React Query fetching with compound key to automatically refresh on filter/page change
@@ -106,6 +110,17 @@ export default function ProductSection({ categoryName = 'All', page = 1, onPageC
 
   return (
     <div className="w-full py-8 space-y-8">
+      {/* Toast Notification Banner */}
+      {notification && (
+        <div className="fixed top-6 right-6 z-50 max-w-sm w-full animate-slide-in-right">
+          <Notification
+            type={notification.type}
+            message={notification.message}
+            onClose={() => setNotification(null)}
+          />
+        </div>
+      )}
+
       {/* Title & Count Info */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
@@ -193,8 +208,11 @@ export default function ProductSection({ categoryName = 'All', page = 1, onPageC
                   </button>
                   <button
                     onClick={() => {
-                      // Trigger Add to Cart logic
-                      alert(`${product.foodName} added to cart!`);
+                      addItem(product, 1);
+                      setNotification({
+                        type: 'success',
+                        message: `Added ${product.foodName} to cart successfully!`,
+                      });
                     }}
                     className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-xs font-bold transition-all shadow-md hover:shadow-orange-500/10 active:scale-95"
                   >

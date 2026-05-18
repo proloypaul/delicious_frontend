@@ -7,6 +7,8 @@ import Link from 'next/link';
 import { getProductById, getAllProducts } from '@/services/productApi';
 import { ArrowLeft, Clock, Star, Store, Plus, Minus, ShoppingBag, ShoppingCart, Heart, Tag, ChevronRight } from 'lucide-react';
 import Loader from '@/components/ui/Loader';
+import { useCartStore } from '@/store/store';
+import Notification from '@/components/shared/Notification';
 
 export default function ProductDetailsPage({ params }) {
   const router = useRouter();
@@ -17,6 +19,8 @@ export default function ProductDetailsPage({ params }) {
 
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const addItem = useCartStore((state) => state.addItem);
+  const [notification, setNotification] = useState(null);
 
   // 1. Fetch Main Product Details
   const { data: productData, isLoading, isError } = useQuery({
@@ -57,7 +61,11 @@ export default function ProductDetailsPage({ params }) {
   };
 
   const handleAddToCart = () => {
-    alert(`${quantity}x ${product?.foodName} added to cart!`);
+    addItem(product, quantity);
+    setNotification({
+      type: 'success',
+      message: `Successfully added ${quantity}x ${product?.foodName} to your cart!`,
+    });
   };
 
   // Loading Indicator
@@ -97,6 +105,16 @@ export default function ProductDetailsPage({ params }) {
 
   return (
     <div className="flex-1 bg-slate-50 min-h-screen">
+      {/* Toast Notification Banner */}
+      {notification && (
+        <div className="fixed top-6 right-6 z-50 max-w-sm w-full animate-slide-in-right">
+          <Notification
+            type={notification.type}
+            message={notification.message}
+            onClose={() => setNotification(null)}
+          />
+        </div>
+      )}
       {/* Sticky Premium Navbar */}
       <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ShoppingBag, LogOut, User } from 'lucide-react';
 import CategorySection from '@/components/home/CategorySection';
 import ProductSection from '@/components/home/ProductSection';
+import { useCartStore } from '@/store/store';
 
 export default function Home() {
   const router = useRouter();
@@ -14,9 +15,13 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [page, setPage] = useState(1);
 
+  const [mounted, setMounted] = useState(false);
+  const cartItemsCount = useCartStore((state) => state.getTotalItems());
+
   // Safely retrieve user session from localStorage
   const [user, setUser] = React.useState(null);
   React.useEffect(() => {
+    setMounted(true);
     if (typeof window !== 'undefined') {
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
@@ -57,6 +62,20 @@ export default function Home() {
           </Link>
           
           <nav className="flex items-center gap-4 sm:gap-6">
+            {/* Shopping Cart Trigger */}
+            <Link
+              href="/checkout"
+              className="relative w-10 h-10 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-600 flex items-center justify-center transition-all shadow-sm active:scale-95 group mr-1"
+              title="Shopping Cart"
+            >
+              <ShoppingBag className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              {mounted && cartItemsCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                  {cartItemsCount}
+                </span>
+              )}
+            </Link>
+
             {user ? (
               <div className="flex items-center gap-3 sm:gap-4">
                 <div className="hidden sm:flex flex-col text-right">
