@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ChefHat, Grid, ShoppingBag, Store, Bike, ChevronRight } from 'lucide-react';
+import { ChefHat, Grid, ShoppingBag, Store, Bike, ChevronRight, Users } from 'lucide-react';
 
 export default function AdminSidebar({ activeTab, setActiveTab, resetForm }) {
   const pathname = usePathname();
@@ -24,6 +24,7 @@ export default function AdminSidebar({ activeTab, setActiveTab, resetForm }) {
   const isMainDashboard = pathname === '/admin/dashboard';
   const isSellersRoute = pathname === '/admin/dashboard/sellers';
   const isRidersRoute = pathname === '/admin/dashboard/riders';
+  const isCustomersRoute = pathname === '/admin/dashboard/customers';
 
   return (
     <aside className="w-full md:w-80 shrink-0 bg-slate-900 border-b md:border-b-0 md:border-r border-slate-800 flex flex-col justify-between py-8 px-6 shadow-2xl relative z-20">
@@ -122,7 +123,22 @@ export default function AdminSidebar({ activeTab, setActiveTab, resetForm }) {
               <Bike className={`w-4 h-4 transition-transform ${isRidersRoute ? 'scale-110' : 'group-hover:translate-x-0.5'}`} />
               Riders Registry
             </span>
-            <ChevronRight className={`w-4 h-4 opacity-50 ${isRidersRoute ? 'rotate-90' : ''} transition-transform`} />
+          </Link>
+
+          {/* Route: Customer Management */}
+          <Link
+            href="/admin/dashboard/customers"
+            className={`w-full flex items-center justify-between py-4 px-5 rounded-2xl text-sm font-extrabold tracking-wide uppercase transition-all duration-300 group ${
+              isCustomersRoute
+                ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/15'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+            }`}
+          >
+            <span className="flex items-center gap-3">
+              <Users className={`w-4 h-4 transition-transform ${isCustomersRoute ? 'scale-110' : 'group-hover:translate-x-0.5'}`} />
+              Customers Registry
+            </span>
+            <ChevronRight className={`w-4 h-4 opacity-50 ${isCustomersRoute ? 'rotate-90' : ''} transition-transform`} />
           </Link>
         </nav>
       </div>
