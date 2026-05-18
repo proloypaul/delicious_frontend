@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getProductById, getAllProducts } from '@/services/productApi';
-import { ArrowLeft, Clock, Star, Store, Plus, Minus, ShoppingBag, ShoppingCart, Heart, Tag, ChevronRight } from 'lucide-react';
+import { createReview, getReviewsByProduct } from '@/services/reviewApi';
+import { ArrowLeft, Clock, Star, Store, Plus, Minus, ShoppingBag, ShoppingCart, Heart, Tag, ChevronRight, MessageSquare, Send, Award, ThumbsUp } from 'lucide-react';
 import Loader from '@/components/ui/Loader';
 import { useCartStore } from '@/store/store';
 import Notification from '@/components/shared/Notification';
@@ -21,6 +22,84 @@ export default function ProductDetailsPage({ params }) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
   const [notification, setNotification] = useState(null);
+
+  // Reviews integration states
+  const [user, setUser] = useState(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewMessage, setReviewMessage] = useState('');
+
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('user');
+      if (stored) {
+        try {
+          setUser(JSON.parse(stored));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, []);
+
+  // Fetch product reviews
+  const { data: reviewsResponse, isLoading: isLoadingReviews } = useQuery({
+    queryKey: ['productReviews', productId],
+    queryFn: () => getReviewsByProduct(productId),
+    enabled: !!productId,
+  });
+
+  const reviewsList = reviewsResponse?.data || [];
+  
+  const totalReviewsCount = reviewsList.length;
+  const averageRating = totalReviewsCount > 0
+    ? (reviewsList.reduce((acc, curr) => acc + curr.rating, 0) / totalReviewsCount).toFixed(1)
+    : '4.8';
+
+  // Submit review mutation
+  const submitReviewMutation = useMutation({
+    mutationFn: (payload) => createReview(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['productReviews', productId]);
+      setReviewMessage('');
+      setReviewRating(5);
+      setNotification({
+        type: 'success',
+        message: 'Thank you! Your gourmet review has been published.',
+      });
+    },
+    onError: (err) => {
+      setNotification({
+        type: 'error',
+        message: err.message || 'Failed to publish review.',
+      });
+    },
+  });
+
+  const handleSubmitReview = (e) => {
+    e.preventDefault();
+    if (!user) {
+      setNotification({
+        type: 'error',
+        message: 'Please login to submit a review.',
+      });
+      return;
+    }
+    if (!reviewMessage.trim()) {
+      setNotification({
+        type: 'error',
+        message: 'Review message cannot be empty.',
+      });
+      return;
+    }
+    submitReviewMutation.mutate({
+      rating: reviewRating,
+      message: reviewMessage,
+      productId: Number(productId),
+      customerId: user.id,
+    });
+  };
 
   // 1. Fetch Main Product Details
   const { data: productData, isLoading, isError } = useQuery({
@@ -189,7 +268,7 @@ export default function ProductDetailsPage({ params }) {
               <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
                 <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide">Rating</p>
                 <div className="mt-1 flex items-center justify-center gap-1 text-slate-800 font-extrabold text-sm sm:text-base">
-                  <Star className="w-4 h-4 text-amber-500 fill-amber-500" /> 4.5 / 5.0
+                  <Star className="w-4 h-4 text-amber-500 fill-amber-500" /> {averageRating} / 5.0
                 </div>
               </div>
 
@@ -275,6 +354,166 @@ export default function ProductDetailsPage({ params }) {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Gourmet Reviews System Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 pt-10 border-t border-slate-200">
+          
+          {/* Left Column: Customer Review Cards */}
+          <div className="lg:col-span-7 space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-orange-500 animate-pulse" /> Customer Reviews ({totalReviewsCount})
+                </h3>
+                <p className="text-xs text-slate-400 font-semibold mt-1">Real ratings and feedback shared by our verified diners.</p>
+              </div>
+
+              {/* Quick Overall Average Rating */}
+              <div className="flex items-center gap-2 bg-orange-50/50 border border-orange-100 rounded-2xl px-4 py-2 shrink-0 self-start sm:self-auto">
+                <Star className="w-4 h-4 text-amber-500 fill-amber-500 animate-spin-slow" />
+                <span className="text-sm font-black text-slate-800">{averageRating}</span>
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">/ 5.0</span>
+              </div>
+            </div>
+
+            {/* List of Reviews */}
+            {isLoadingReviews ? (
+              <div className="py-12 text-center"><Loader /></div>
+            ) : reviewsList.length === 0 ? (
+              <div className="bg-white border border-slate-100 rounded-3xl p-8 text-center text-slate-400 font-bold uppercase tracking-widest text-xs">
+                No gourmet reviews posted for this meal yet. Be the first to share your thoughts!
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {reviewsList.map((review, i) => {
+                  const ratingStars = Array.from({ length: 5 }, (_, index) => index < review.rating);
+                  const reviewerName = review.customerName || 'Verified Diner';
+                  const initial = reviewerName.charAt(0).toUpperCase();
+                  
+                  return (
+                    <div 
+                      key={review.id || i}
+                      className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm flex gap-4 items-start hover:border-slate-200 transition-colors"
+                    >
+                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-500 to-red-500 text-white font-extrabold text-sm flex items-center justify-center shrink-0 shadow-sm uppercase">
+                        {initial}
+                      </div>
+                      
+                      <div className="space-y-2 flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-4">
+                          <h5 className="font-extrabold text-slate-800 text-sm truncate uppercase tracking-tight">
+                            {reviewerName}
+                          </h5>
+                          <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest shrink-0">
+                            Verified Customer
+                          </span>
+                        </div>
+
+                        {/* Stars displaying rating */}
+                        <div className="flex items-center gap-0.5">
+                          {ratingStars.map((filled, idx) => (
+                            <Star 
+                              key={idx} 
+                              className={`w-3.5 h-3.5 ${filled ? 'text-amber-500 fill-amber-500' : 'text-slate-200'}`} 
+                            />
+                          ))}
+                        </div>
+
+                        <p className="text-xs text-slate-500 leading-relaxed font-semibold uppercase tracking-wide">
+                          {review.message}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Right Column: Write a Review Form */}
+          <div className="lg:col-span-5 space-y-6">
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-sm space-y-6">
+              
+              <div>
+                <h4 className="text-lg font-black text-slate-900 uppercase tracking-tight flex items-center gap-2">
+                  <Award className="w-5 h-5 text-orange-500" /> Share Your Opinion
+                </h4>
+                <p className="text-xs text-slate-400 font-semibold mt-1">Your review will help kitchens and riders optimize meal drop services.</p>
+              </div>
+
+              {/* Login gate check */}
+              {!user ? (
+                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 text-center space-y-4">
+                  <p className="text-xs text-slate-500 font-bold uppercase tracking-wider leading-relaxed">
+                    Please log in with a customer account to publish your meal feedback and rate this chef!
+                  </p>
+                  <button
+                    onClick={() => router.push('/login')}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all active:scale-95"
+                  >
+                    Log In Now
+                  </button>
+                </div>
+              ) : user.role !== 'CUSTOMER' ? (
+                <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-5 text-center text-xs font-bold text-amber-700 uppercase tracking-wider">
+                  Only customers are authorized to submit meal reviews.
+                </div>
+              ) : (
+                <form onSubmit={handleSubmitReview} className="space-y-5">
+                  {/* Rating Selector */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Rating stars</label>
+                    <div className="flex items-center gap-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setReviewRating(star)}
+                          className="focus:outline-none transition-transform active:scale-90"
+                        >
+                          <Star 
+                            className={`w-8 h-8 ${
+                              star <= reviewRating 
+                                ? 'text-amber-500 fill-amber-500 drop-shadow-[0_2px_4px_rgba(245,158,11,0.25)]' 
+                                : 'text-slate-200'
+                            }`} 
+                          />
+                        </button>
+                      ))}
+                      <span className="text-xs font-black text-slate-500 uppercase tracking-wider ml-2 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">
+                        {reviewRating === 5 ? 'Excellent' : reviewRating === 4 ? 'Very Good' : reviewRating === 3 ? 'Good' : reviewRating === 2 ? 'Fair' : 'Poor'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Feedback Message */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Your feedback</label>
+                    <textarea
+                      rows={4}
+                      value={reviewMessage}
+                      onChange={(e) => setReviewMessage(e.target.value)}
+                      placeholder="Write your review here... How was the taste, presentation, and preparation time?"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-semibold text-slate-700 placeholder-slate-400 focus:outline-none focus:border-orange-500 focus:bg-white transition-colors"
+                      maxLength={1000}
+                    />
+                  </div>
+
+                  {/* Submit button */}
+                  <button
+                    type="submit"
+                    disabled={submitReviewMutation.isLoading}
+                    className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl text-white bg-slate-900 hover:bg-slate-800 disabled:opacity-40 font-extrabold text-xs uppercase tracking-wider transition-all shadow-md active:scale-[0.98]"
+                  >
+                    <Send className="w-4 h-4" /> Submit Gourmet Review
+                  </button>
+                </form>
+              )}
+
+            </div>
+          </div>
+
         </div>
 
         {/* Dynamic Related Products Carousel */}

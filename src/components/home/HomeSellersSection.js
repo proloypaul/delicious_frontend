@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
 import { Store, ChevronLeft, ChevronRight, ChefHat, MapPin, Phone } from 'lucide-react';
 import { getAllSellers } from '@/services/sellerApi';
 import Loader from '@/components/ui/Loader';
@@ -64,9 +65,10 @@ export default function HomeSellersSection() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {sellersList.map((seller) => (
-            <div 
+            <Link 
               key={seller.userId}
-              className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col group"
+              href={`/sellers/${seller.userId}`}
+              className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm hover:shadow-md hover:scale-[1.01] transition-all duration-300 flex flex-col group cursor-pointer"
             >
               <div className="h-44 w-full bg-slate-100 relative overflow-hidden">
                 <img 
@@ -98,7 +100,7 @@ export default function HomeSellersSection() {
                   </p>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}
