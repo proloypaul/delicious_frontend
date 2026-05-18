@@ -19,6 +19,13 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     setMounted(true);
+    if (typeof window !== 'undefined') {
+      const savedTab = localStorage.getItem('adminActiveTab');
+      if (savedTab) {
+        setActiveTab(savedTab);
+        localStorage.removeItem('adminActiveTab');
+      }
+    }
   }, []);
 
   // Fetch all categories once at root to map categories for selection list

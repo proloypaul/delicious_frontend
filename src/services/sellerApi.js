@@ -14,3 +14,14 @@ export async function getSellerProducts(userId, page = 0, size = 10) {
   const response = await api.get(`/sellers/products?userId=${userId}&page=${page}&size=${size}`);
   return response.data;
 }
+
+export async function getAllSellers({ page = 1, size = 10 } = {}) {
+  const pageParam = Math.max(0, page - 1);
+  const response = await api.get('/sellers', {
+    params: {
+      page: pageParam,
+      size
+    }
+  });
+  return response.data;
+}

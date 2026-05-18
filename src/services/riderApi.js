@@ -35,3 +35,18 @@ export async function getRiderById(id) {
   const response = await api.get(`/riders/${id}`);
   return response.data;
 }
+
+/**
+ * Fetch all registered riders in the system.
+ * Endpoint: GET /riders
+ */
+export async function getAllRiders({ page = 1, size = 10 } = {}) {
+  const pageParam = Math.max(0, page - 1);
+  const response = await api.get('/riders', {
+    params: {
+      page: pageParam,
+      size
+    }
+  });
+  return response.data;
+}

@@ -1,17 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ShoppingBag, LogOut, User } from 'lucide-react';
 import CategorySection from '@/components/home/CategorySection';
 import ProductSection from '@/components/home/ProductSection';
+import HomeSellersSection from '@/components/home/HomeSellersSection';
+import HomeRidersSection from '@/components/home/HomeRidersSection';
+import HomeEcosystemSection from '@/components/home/HomeEcosystemSection';
+import HomeFooter from '@/components/home/HomeFooter';
 import { useCartStore } from '@/store/store';
 
 export default function Home() {
   const router = useRouter();
   
-  // State to drive filters and page increments
+  // State for products filter & paging
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [page, setPage] = useState(1);
 
@@ -19,8 +23,8 @@ export default function Home() {
   const cartItemsCount = useCartStore((state) => state.getTotalItems());
 
   // Safely retrieve user session from localStorage
-  const [user, setUser] = React.useState(null);
-  React.useEffect(() => {
+  const [user, setUser] = useState(null);
+  useEffect(() => {
     setMounted(true);
     if (typeof window !== 'undefined') {
       const storedUser = localStorage.getItem('user');
@@ -51,7 +55,7 @@ export default function Home() {
     <div className="flex-1 flex flex-col bg-slate-50 min-h-screen">
       {/* Sticky Premium Navbar */}
       <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-500 to-red-500 flex items-center justify-center text-white font-black text-xl shadow-md transform group-hover:rotate-12 transition-transform">
               D
@@ -132,32 +136,35 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Layout containing only Category and Products sections */}
-      <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8 flex-1">
-        {/* Category section with horizontal scrolling capsules */}
-        <CategorySection
-          activeCategory={selectedCategory}
-          onSelectCategory={handleCategoryChange}
-        />
+      {/* Main Layout containing Category, Products, Kitchens, Riders and Ecosystem sections */}
+      <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-16 lg:space-y-24 flex-1">
+        
+        {/* Category filter and food products grid */}
+        <section className="space-y-6">
+          <CategorySection
+            activeCategory={selectedCategory}
+            onSelectCategory={handleCategoryChange}
+          />
+          <ProductSection
+            categoryName={selectedCategory}
+            page={page}
+            onPageChange={setPage}
+          />
+        </section>
 
-        {/* Dynamic products list grid with page navigation controls */}
-        <ProductSection
-          categoryName={selectedCategory}
-          page={page}
-          onPageChange={setPage}
-        />
+        {/* Modular Partner Kitchens (Sellers) List */}
+        <HomeSellersSection />
+
+        {/* Modular Delivery Riders List */}
+        <HomeRidersSection />
+
+        {/* Modular Ecosystem Map */}
+        <HomeEcosystemSection />
+
       </main>
 
-      {/* Footer */}
-      <footer className="py-8 bg-slate-900 text-slate-400 text-sm font-medium border-t border-slate-800 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p>© {new Date().getFullYear()} Delicious Inc. All rights reserved.</p>
-          <div className="flex gap-6">
-            <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
-            <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
-          </div>
-        </div>
-      </footer>
+      {/* Professional Modular Footer */}
+      <HomeFooter />
     </div>
   );
 }
