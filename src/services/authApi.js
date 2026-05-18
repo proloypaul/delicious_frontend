@@ -14,6 +14,19 @@ export async function registerCustomer(data) {
 }
 
 /**
+ * Register a new admin
+ * Payload: { name, email, phone, password, role: 'ADMIN' }
+ */
+export async function registerAdmin(data) {
+  const payload = {
+    ...data,
+    role: 'ADMIN',
+  };
+  const response = await api.post('/auth/register', payload);
+  return response.data;
+}
+
+/**
  * Register a new seller
  * Endpoint: /sellers/register
  * Payload: { name, email, phone, password, storeName, role: 'SELLER' }
