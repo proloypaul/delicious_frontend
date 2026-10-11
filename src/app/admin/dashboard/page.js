@@ -11,21 +11,15 @@ import AdminSidebar from '@/components/admin/AdminSidebar';
 import AdminProductsTab from '@/components/admin/AdminProductsTab';
 import AdminCategoriesTab from '@/components/admin/AdminCategoriesTab';
 import AdminOrdersTab from '@/components/admin/AdminOrdersTab';
+import { useAdminStore } from '@/store/store';
 
 export default function AdminDashboardPage() {
   const [mounted, setMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState('products');
+  const { activeTab, setActiveTab } = useAdminStore();
   const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     setMounted(true);
-    if (typeof window !== 'undefined') {
-      const savedTab = localStorage.getItem('adminActiveTab');
-      if (savedTab) {
-        setActiveTab(savedTab);
-        localStorage.removeItem('adminActiveTab');
-      }
-    }
   }, []);
 
   // Fetch all categories once at root to map categories for selection list

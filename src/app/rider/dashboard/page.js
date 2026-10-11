@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Loader from '@/components/ui/Loader';
 import Notification from '@/components/shared/Notification';
+import { useAuthStore } from '@/store/store';
 
 // Import modular sub-components
 import RiderSidebar from '@/components/rider/RiderSidebar';
@@ -14,23 +15,10 @@ export default function RiderDashboardPage() {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState('jobs');
   const [notification, setNotification] = useState(null);
-  const [riderSession, setRiderSession] = useState(null);
+  const { user: riderSession } = useAuthStore();
 
   useEffect(() => {
     setMounted(true);
-
-    // Retrieve active logged-in user session
-    if (typeof window !== 'undefined') {
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        try {
-          const parsed = JSON.parse(storedUser);
-          setRiderSession(parsed);
-        } catch (e) {
-          console.error('Failed to parse user session details', e);
-        }
-      }
-    }
   }, []);
 
   const showSuccess = (message) => {

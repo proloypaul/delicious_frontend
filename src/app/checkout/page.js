@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, ShoppingBag, Trash2, Plus, Minus, CreditCard, MapPin, Phone, User, CheckCircle, Ticket, AlertCircle } from 'lucide-react';
-import { useCartStore } from '@/store/store';
+import { useCartStore, useAuthStore } from '@/store/store';
 import { createOrder } from '@/services/orderApi';
 import { getCustomerProfile } from '@/services/customerApi';
 import Loader from '@/components/ui/Loader';
@@ -12,6 +12,7 @@ import Notification from '@/components/shared/Notification';
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const { user: authUser } = useAuthStore();
   
   // Zustand Cart Store hooks
   const cartItems = useCartStore((state) => state.items);
@@ -46,22 +47,14 @@ export default function CheckoutPage() {
   useEffect(() => {
     setMounted(true);
     
-    // Check if user is logged in
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-        
-        // Fetch customer profile details if logged in
-        if (parsedUser.role === 'CUSTOMER') {
-          fetchCustomerProfile(parsedUser.id);
-        }
-      } catch (e) {
-        console.error('Failed to parse user session', e);
+    // Check if user is logged in via Zustand store
+    if (authUser) {
+      setUser(authUser);
+      if (authUser.role === 'CUSTOMER') {
+        fetchCustomerProfile(authUser.id);
       }
     }
-  }, []);
+  }, [authUser]);
 
   const fetchCustomerProfile = async (userId) => {
     setLoadingProfile(true);

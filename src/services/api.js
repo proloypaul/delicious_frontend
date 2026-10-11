@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAuthStore } from '@/store/store';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9080/api/v1',
@@ -11,20 +12,10 @@ const api = axios.create({
 // Request interceptor to automatically attach authorization headers
 api.interceptors.request.use(
   (config) => {
-    if (typeof window !== 'undefined') {
-      // Read token from Zustand persist storage (single source of truth)
-      // Zustand persist stores state under the 'name' key in localStorage
-      try {
-        const authState = localStorage.getItem('delicious-auth');
-        if (authState) {
-          const { state } = JSON.parse(authState);
-          if (state?.token) {
-            config.headers.Authorization = `Bearer ${state.token}`;
-          }
-        }
-      } catch {
-        // Ignore parse errors — request proceeds without auth header
-      }
+    // Read token directly from Zustand store
+    const token = useAuthStore.getState().token;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },

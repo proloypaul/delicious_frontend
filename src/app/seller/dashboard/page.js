@@ -10,6 +10,7 @@ import { getAllCategories } from '@/services/categoryApi';
 import { createProduct, updateProduct, deleteProduct } from '@/services/productApi';
 import Loader from '@/components/ui/Loader';
 import Notification from '@/components/shared/Notification';
+import { useAuthStore } from '@/store/store';
 
 // Import modular sub-components
 import SellerKitchenHeader from '@/components/seller/SellerKitchenHeader';
@@ -19,6 +20,7 @@ import SellerProductModal from '@/components/seller/SellerProductModal';
 export default function SellerDashboardPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { user: authUser, logout } = useAuthStore();
 
   // Authentication & session variables
   const [mounted, setMounted] = useState(false);
@@ -54,24 +56,18 @@ export default function SellerDashboardPage() {
 
   useEffect(() => {
     setMounted(true);
-    // Authentication Check
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        if (parsedUser.role !== 'SELLER') {
-          router.push('/');
-        } else {
-          setUser(parsedUser);
-        }
-      } catch (e) {
-        console.error('Failed to parse user session', e);
-        router.push('/login');
-      }
-    } else {
+    if (!authUser) {
       router.push('/login?redirect=/seller/dashboard');
+      return;
     }
-  }, []);
+
+    if (authUser.role !== 'SELLER') {
+      router.push('/');
+      return;
+    }
+
+    setUser(authUser);
+  }, [authUser, router]);
 
   // 1. Fetch Seller Kitchen Profile
   const { data: profileData, isLoading: isLoadingProfile } = useQuery({
@@ -266,8 +262,7 @@ export default function SellerDashboardPage() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    logout();
     router.push('/login');
   };
 

@@ -4,13 +4,14 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Bike, Compass, User, LogOut, ChevronRight } from 'lucide-react';
+import { useAuthStore } from '@/store/store';
 
 export default function RiderSidebar({ activeTab, setActiveTab }) {
   const router = useRouter();
+  const { logout } = useAuthStore();
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    logout();
     router.push('/login');
   };
 

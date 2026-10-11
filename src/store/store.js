@@ -60,25 +60,34 @@ export const useAuthStore = create(
 
       /**
        * Store the authenticated user object.
-       * Zustand persist middleware handles localStorage serialization —
-       * do NOT add manual localStorage.setItem calls here (double-write bug).
+       * Zustand persist middleware automatically synchronizes to localStorage.
        */
       setUser: (user) => set({ user }),
 
       /**
        * Store the JWT token returned from login/register.
-       * The api.js interceptor reads this from Zustand state directly
-       * to attach the Authorization header.
        */
       setToken: (token) => set({ token }),
 
-      logout: () => {
-        // Zustand persist will automatically clear localStorage on next sync
-        set({ user: null, token: null });
-      },
+      /**
+       * Clear authentication session.
+       */
+      logout: () => set({ user: null, token: null }),
     }),
     {
-      name: 'delicious-auth',  // localStorage key
+      name: 'delicious-auth',
+    }
+  )
+);
+
+export const useAdminStore = create(
+  persist(
+    (set) => ({
+      activeTab: 'products',
+      setActiveTab: (tab) => set({ activeTab: tab }),
+    }),
+    {
+      name: 'delicious-admin-tab',
     }
   )
 );
