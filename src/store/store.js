@@ -57,39 +57,28 @@ export const useAuthStore = create(
     (set) => ({
       user: null,
       token: null,
-      
-      setUser: (user) => {
-        if (typeof window !== 'undefined') {
-          if (user) {
-            localStorage.setItem('user', JSON.stringify(user));
-          } else {
-            localStorage.removeItem('user');
-          }
-        }
-        set({ user });
-      },
-      
-      setToken: (token) => {
-        if (typeof window !== 'undefined') {
-          if (token) {
-            localStorage.setItem('token', token);
-          } else {
-            localStorage.removeItem('token');
-          }
-        }
-        set({ token });
-      },
-      
+
+      /**
+       * Store the authenticated user object.
+       * Zustand persist middleware handles localStorage serialization —
+       * do NOT add manual localStorage.setItem calls here (double-write bug).
+       */
+      setUser: (user) => set({ user }),
+
+      /**
+       * Store the JWT token returned from login/register.
+       * The api.js interceptor reads this from Zustand state directly
+       * to attach the Authorization header.
+       */
+      setToken: (token) => set({ token }),
+
       logout: () => {
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-        }
+        // Zustand persist will automatically clear localStorage on next sync
         set({ user: null, token: null });
       },
     }),
     {
-      name: 'delicious-auth',
+      name: 'delicious-auth',  // localStorage key
     }
   )
 );

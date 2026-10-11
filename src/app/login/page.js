@@ -9,9 +9,11 @@ import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import Notification from '@/components/shared/Notification';
 import { loginUser } from '@/services/authApi';
+import { useAuthStore } from '@/store/store';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { setUser, setToken } = useAuthStore();
 
   // Form State
   const [formData, setFormData] = useState({
@@ -73,11 +75,11 @@ export default function LoginPage() {
         message: `Welcome back, ${authData.name}! Logging you in...`,
       });
 
-      // Save token and user details to localStorage
-      // Fallback to a mockup token since backend JWT is not fully initialized
-      const token = authData.token || 'mock-jwt-token-string';
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(authData));
+      // Persist token and user in Zustand store (backed by localStorage via persist middleware)
+      if (authData.token) {
+        setToken(authData.token);
+      }
+      setUser(authData);
 
       // Redirect user dynamically based on their role
       setTimeout(() => {
