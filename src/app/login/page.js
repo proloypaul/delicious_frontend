@@ -1,17 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { Mail, Lock, LogIn } from 'lucide-react';
 import AuthCard from '@/components/ui/AuthCard';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import Notification from '@/components/shared/Notification';
 import { loginUser } from '@/services/authApi';
+import { useAuthStore } from '@/store/store';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get('redirect');
+  const { setUser, setToken } = useAuthStore();
 
   // Form State
   const [formData, setFormData] = useState({
@@ -73,14 +78,24 @@ export default function LoginPage() {
         message: `Welcome back, ${authData.name}! Logging you in...`,
       });
 
-      // Save token and user details to localStorage
-      // Fallback to a mockup token since backend JWT is not fully initialized
-      const token = authData.token || 'mock-jwt-token-string';
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(authData));
+      // Persist token and user in Zustand store
+      if (authData.token) {
+        setToken(authData.token);
+        // Also set cookie so Next.js Edge Middleware can inspect route access
+        if (typeof document !== 'undefined') {
+          document.cookie = `delicious_token=${authData.token}; path=/; max-age=604800; SameSite=Lax`;
+          document.cookie = `delicious_role=${authData.role}; path=/; max-age=604800; SameSite=Lax`;
+        }
+      }
+      setUser(authData);
 
-      // Redirect user dynamically based on their role
+      // Redirect user dynamically based on redirect param or their role
       setTimeout(() => {
+        if (redirectUrl) {
+          router.push(redirectUrl);
+          return;
+        }
+
         const role = authData.role;
         if (role === 'CUSTOMER') {
           router.push('/');
@@ -194,4 +209,10 @@ export default function LoginPage() {
   );
 }
 
-import Link from 'next/link';
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}

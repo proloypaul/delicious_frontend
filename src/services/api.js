@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { useAuthStore } from '@/store/store';
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9080/api/v1',
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -11,11 +12,10 @@ const api = axios.create({
 // Request interceptor to automatically attach authorization headers
 api.interceptors.request.use(
   (config) => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+    // Read token directly from Zustand store
+    const token = useAuthStore.getState().token;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
@@ -29,7 +29,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     let errorMessage = 'An unexpected error occurred. Please try again.';
-    
+
     if (error.response) {
       // The request was made and the server responded with a status code
       // that falls out of the range of 2xx
@@ -47,7 +47,7 @@ api.interceptors.response.use(
       // Something happened in setting up the request that triggered an Error
       errorMessage = error.message;
     }
-    
+
     return Promise.reject(new Error(errorMessage));
   }
 );

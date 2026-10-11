@@ -10,10 +10,11 @@ import HomeSellersSection from '@/components/home/HomeSellersSection';
 import HomeRidersSection from '@/components/home/HomeRidersSection';
 import HomeEcosystemSection from '@/components/home/HomeEcosystemSection';
 import HomeFooter from '@/components/home/HomeFooter';
-import { useCartStore } from '@/store/store';
+import { useCartStore, useAuthStore } from '@/store/store';
 
 export default function Home() {
   const router = useRouter();
+  const { user, logout } = useAuthStore();
   
   // State for products filter & paging
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -22,20 +23,8 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const cartItemsCount = useCartStore((state) => state.getTotalItems());
 
-  // Safely retrieve user session from localStorage
-  const [user, setUser] = useState(null);
   useEffect(() => {
     setMounted(true);
-    if (typeof window !== 'undefined') {
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        try {
-          setUser(JSON.parse(storedUser));
-        } catch (e) {
-          console.error('Failed to parse stored user session', e);
-        }
-      }
-    }
   }, []);
 
   // Category filter changes must reset pagination back to page 1
@@ -45,9 +34,7 @@ export default function Home() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setUser(null);
+    logout();
     router.push('/login');
   };
 

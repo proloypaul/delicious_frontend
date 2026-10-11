@@ -57,39 +57,43 @@ export const useAuthStore = create(
     (set) => ({
       user: null,
       token: null,
-      
-      setUser: (user) => {
-        if (typeof window !== 'undefined') {
-          if (user) {
-            localStorage.setItem('user', JSON.stringify(user));
-          } else {
-            localStorage.removeItem('user');
-          }
-        }
-        set({ user });
-      },
-      
-      setToken: (token) => {
-        if (typeof window !== 'undefined') {
-          if (token) {
-            localStorage.setItem('token', token);
-          } else {
-            localStorage.removeItem('token');
-          }
-        }
-        set({ token });
-      },
-      
+
+      /**
+       * Store the authenticated user object.
+       * Zustand persist middleware automatically synchronizes to localStorage.
+       */
+      setUser: (user) => set({ user }),
+
+      /**
+       * Store the JWT token returned from login/register.
+       */
+      setToken: (token) => set({ token }),
+
+      /**
+       * Clear authentication session.
+       */
       logout: () => {
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
+        if (typeof document !== 'undefined') {
+          document.cookie = 'delicious_token=; path=/; max-age=0';
+          document.cookie = 'delicious_role=; path=/; max-age=0';
         }
         set({ user: null, token: null });
       },
     }),
     {
       name: 'delicious-auth',
+    }
+  )
+);
+
+export const useAdminStore = create(
+  persist(
+    (set) => ({
+      activeTab: 'products',
+      setActiveTab: (tab) => set({ activeTab: tab }),
+    }),
+    {
+      name: 'delicious-admin-tab',
     }
   )
 );

@@ -4,14 +4,16 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, ShoppingBag, Trash2, Plus, Minus, CreditCard, MapPin, Phone, User, CheckCircle, Ticket, AlertCircle } from 'lucide-react';
-import { useCartStore } from '@/store/store';
+import { useCartStore, useAuthStore } from '@/store/store';
 import { createOrder } from '@/services/orderApi';
 import { getCustomerProfile } from '@/services/customerApi';
+import { validateCoupon } from '@/services/couponApi';
 import Loader from '@/components/ui/Loader';
 import Notification from '@/components/shared/Notification';
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const { user: authUser } = useAuthStore();
   
   // Zustand Cart Store hooks
   const cartItems = useCartStore((state) => state.items);
@@ -33,6 +35,7 @@ export default function CheckoutPage() {
   const [couponCode, setCouponCode] = useState('');
   const [discountAmount, setDiscountAmount] = useState(0);
   const [couponApplied, setCouponApplied] = useState(false);
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
 
   // Form details
   const [formData, setFormData] = useState({
@@ -46,22 +49,14 @@ export default function CheckoutPage() {
   useEffect(() => {
     setMounted(true);
     
-    // Check if user is logged in
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-        
-        // Fetch customer profile details if logged in
-        if (parsedUser.role === 'CUSTOMER') {
-          fetchCustomerProfile(parsedUser.id);
-        }
-      } catch (e) {
-        console.error('Failed to parse user session', e);
+    // Check if user is logged in via Zustand store
+    if (authUser) {
+      setUser(authUser);
+      if (authUser.role === 'CUSTOMER') {
+        fetchCustomerProfile(authUser.id);
       }
     }
-  }, []);
+  }, [authUser]);
 
   const fetchCustomerProfile = async (userId) => {
     setLoadingProfile(true);
@@ -81,26 +76,33 @@ export default function CheckoutPage() {
     }
   };
 
-  const handleApplyCoupon = () => {
-    if (couponCode.trim().toUpperCase() === 'DELICIOUS50') {
-      if (totalPrice < 150) {
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+
+    setIsValidatingCoupon(true);
+    try {
+      const response = await validateCoupon(couponCode.trim(), totalPrice);
+      const couponData = response?.data;
+      if (couponData && couponData.valid) {
+        setDiscountAmount(Number(couponData.discountAmount));
+        setCouponApplied(true);
+        setNotification({
+          type: 'success',
+          message: couponData.message || `Promo coupon ${couponData.code} applied! Saved ${couponData.discountAmount} BDT.`,
+        });
+      } else {
         setNotification({
           type: 'error',
-          message: 'Min order amount for DELICIOUS50 coupon is 150 BDT.',
+          message: couponData?.message || response?.message || 'Invalid coupon code.',
         });
-        return;
       }
-      setDiscountAmount(50);
-      setCouponApplied(true);
-      setNotification({
-        type: 'success',
-        message: 'Promo coupon DELICIOUS50 applied! Saved 50 BDT.',
-      });
-    } else {
+    } catch (err) {
       setNotification({
         type: 'error',
-        message: 'Invalid coupon code. Try "DELICIOUS50".',
+        message: err.message || 'Failed to validate coupon with server.',
       });
+    } finally {
+      setIsValidatingCoupon(false);
     }
   };
 
@@ -140,6 +142,7 @@ export default function CheckoutPage() {
         phone: formData.phone,
         address: formData.address,
         discount: discountAmount,
+        couponCode: couponApplied ? couponCode.trim().toUpperCase() : null,
         items: cartItems.map((item) => ({
           productId: Number(item.id),
           quantity: item.quantity,
@@ -474,10 +477,10 @@ export default function CheckoutPage() {
                     <button
                       type="button"
                       onClick={handleApplyCoupon}
-                      disabled={couponApplied || !couponCode.trim()}
+                      disabled={couponApplied || !couponCode.trim() || isValidatingCoupon}
                       className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs transition-colors shadow-sm disabled:bg-slate-100 disabled:text-slate-350 disabled:cursor-not-allowed"
                     >
-                      Apply
+                      {couponApplied ? 'Applied' : isValidatingCoupon ? 'Checking...' : 'Apply'}
                     </button>
                   </div>
                   {couponApplied && (

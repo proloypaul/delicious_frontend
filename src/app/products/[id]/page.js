@@ -8,11 +8,12 @@ import { getProductById, getAllProducts } from '@/services/productApi';
 import { createReview, getReviewsByProduct } from '@/services/reviewApi';
 import { ArrowLeft, Clock, Star, Store, Plus, Minus, ShoppingBag, ShoppingCart, Heart, Tag, ChevronRight, MessageSquare, Send, Award, ThumbsUp } from 'lucide-react';
 import Loader from '@/components/ui/Loader';
-import { useCartStore } from '@/store/store';
+import { useCartStore, useAuthStore } from '@/store/store';
 import Notification from '@/components/shared/Notification';
 
 export default function ProductDetailsPage({ params }) {
   const router = useRouter();
+  const { user } = useAuthStore();
   
   // Safe Next.js 15 Promise params unwrapping
   const resolvedParams = React.use(params);
@@ -24,24 +25,10 @@ export default function ProductDetailsPage({ params }) {
   const [notification, setNotification] = useState(null);
 
   // Reviews integration states
-  const [user, setUser] = useState(null);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewMessage, setReviewMessage] = useState('');
 
   const queryClient = useQueryClient();
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('user');
-      if (stored) {
-        try {
-          setUser(JSON.parse(stored));
-        } catch (e) {
-          console.error(e);
-        }
-      }
-    }
-  }, []);
 
   // Fetch product reviews
   const { data: reviewsResponse, isLoading: isLoadingReviews } = useQuery({

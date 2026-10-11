@@ -4,16 +4,16 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { ChefHat, Grid, ShoppingBag, Store, Bike, ChevronRight, Users } from 'lucide-react';
+import { useAdminStore } from '@/store/store';
 
 export default function AdminSidebar({ activeTab, setActiveTab, resetForm }) {
   const pathname = usePathname();
   const router = useRouter();
+  const setAdminTab = useAdminStore((state) => state.setActiveTab);
 
   const handleTabClick = (tab) => {
+    setAdminTab(tab);
     if (pathname !== '/admin/dashboard') {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('adminActiveTab', tab);
-      }
       router.push('/admin/dashboard');
     } else {
       setActiveTab?.(tab);

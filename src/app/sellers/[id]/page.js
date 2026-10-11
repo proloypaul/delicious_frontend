@@ -7,12 +7,13 @@ import Link from 'next/link';
 import { ArrowLeft, Store, MapPin, Phone, Clock, Star, ChefHat, ShoppingBag, ShoppingCart } from 'lucide-react';
 import { getSellerProfile, getSellerProducts } from '@/services/sellerApi';
 import Loader from '@/components/ui/Loader';
-import { useCartStore } from '@/store/store';
+import { useCartStore, useAuthStore } from '@/store/store';
 import Notification from '@/components/shared/Notification';
 import HomeFooter from '@/components/home/HomeFooter';
 
 export default function SellerDetailsPage({ params }) {
   const router = useRouter();
+  const { user } = useAuthStore();
   
   // Safe Next.js unwrapping of URL params
   const resolvedParams = React.use(params);
@@ -25,20 +26,8 @@ export default function SellerDetailsPage({ params }) {
   const cartItemsCount = useCartStore((state) => state.getTotalItems());
   const addItem = useCartStore((state) => state.addItem);
 
-  // Safely retrieve user session from localStorage
-  const [user, setUser] = useState(null);
   useEffect(() => {
     setMounted(true);
-    if (typeof window !== 'undefined') {
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        try {
-          setUser(JSON.parse(storedUser));
-        } catch (e) {
-          console.error('Failed to parse stored user session', e);
-        }
-      }
-    }
   }, []);
 
   // 1. Fetch Seller Profile Info
