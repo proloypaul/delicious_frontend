@@ -72,7 +72,13 @@ export const useAuthStore = create(
       /**
        * Clear authentication session.
        */
-      logout: () => set({ user: null, token: null }),
+      logout: () => {
+        if (typeof document !== 'undefined') {
+          document.cookie = 'delicious_token=; path=/; max-age=0';
+          document.cookie = 'delicious_role=; path=/; max-age=0';
+        }
+        set({ user: null, token: null });
+      },
     }),
     {
       name: 'delicious-auth',
