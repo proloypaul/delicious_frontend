@@ -261,8 +261,8 @@ export default function SellerDashboardPage() {
     setIsDeleteOpen(true);
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     router.push('/login');
   };
 

@@ -85,6 +85,9 @@ function LoginForm() {
         if (typeof document !== 'undefined') {
           document.cookie = `delicious_token=${authData.token}; path=/; max-age=604800; SameSite=Lax`;
           document.cookie = `delicious_role=${authData.role}; path=/; max-age=604800; SameSite=Lax`;
+          if (authData.refreshToken) {
+            document.cookie = `delicious_refresh_token=${authData.refreshToken}; path=/; max-age=604800; SameSite=Lax`;
+          }
         }
       }
       setUser(authData);

@@ -33,8 +33,8 @@ export default function Home() {
     setPage(1);
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     router.push('/login');
   };
 

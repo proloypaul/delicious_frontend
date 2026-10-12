@@ -63,3 +63,22 @@ export async function loginUser(data) {
   const response = await api.post('/auth/login', data);
   return response.data;
 }
+
+/**
+ * Refresh access token using httpOnly cookies or fallback token parameter
+ * Endpoint: /auth/refresh-token
+ */
+export async function refreshTokenApi(refreshToken) {
+  const payload = refreshToken ? { refreshToken } : {};
+  const response = await api.post('/auth/refresh-token', payload);
+  return response.data;
+}
+
+/**
+ * Logout user and clear cookies on server
+ * Endpoint: /auth/logout
+ */
+export async function logoutUserApi() {
+  const response = await api.post('/auth/logout');
+  return response.data;
+}

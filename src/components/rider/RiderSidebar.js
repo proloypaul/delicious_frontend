@@ -10,8 +10,8 @@ export default function RiderSidebar({ activeTab, setActiveTab }) {
   const router = useRouter();
   const { logout } = useAuthStore();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     router.push('/login');
   };
 

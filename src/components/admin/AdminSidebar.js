@@ -3,13 +3,14 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ChefHat, Grid, ShoppingBag, Store, Bike, ChevronRight, Users } from 'lucide-react';
-import { useAdminStore } from '@/store/store';
+import { ChefHat, Grid, ShoppingBag, Store, Bike, ChevronRight, Users, LogOut } from 'lucide-react';
+import { useAdminStore, useAuthStore } from '@/store/store';
 
 export default function AdminSidebar({ activeTab, setActiveTab, resetForm }) {
   const pathname = usePathname();
   const router = useRouter();
   const setAdminTab = useAdminStore((state) => state.setActiveTab);
+  const logout = useAuthStore((state) => state.logout);
 
   const handleTabClick = (tab) => {
     setAdminTab(tab);
@@ -144,12 +145,27 @@ export default function AdminSidebar({ activeTab, setActiveTab, resetForm }) {
       </div>
 
       {/* Sidebar Footer Details */}
-      <div className="mt-8 pt-6 border-t border-slate-800 text-center md:text-left">
-        <p className="text-xs font-black text-slate-505 uppercase tracking-widest leading-relaxed">System Console</p>
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-950/40 text-emerald-400 border border-emerald-900/50 text-[10px] font-black tracking-wider uppercase rounded-full mt-2.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-          Server: ONLINE
-        </span>
+      <div className="mt-8 pt-6 border-t border-slate-800 space-y-4">
+        <button
+          onClick={async () => {
+            await logout();
+            router.push('/login');
+          }}
+          className="w-full flex items-center justify-between py-3 px-4 rounded-xl text-xs font-black tracking-widest uppercase text-rose-400 hover:text-white bg-rose-500/10 hover:bg-rose-600 transition-all duration-300 border border-rose-500/20"
+        >
+          <span className="flex items-center gap-2.5">
+            <LogOut className="w-3.5 h-3.5" />
+            Logout Admin
+          </span>
+        </button>
+
+        <div className="text-center md:text-left">
+          <p className="text-xs font-black text-slate-500 uppercase tracking-widest leading-relaxed">System Console</p>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-950/40 text-emerald-400 border border-emerald-900/50 text-[10px] font-black tracking-wider uppercase rounded-full mt-2.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+            Server: ONLINE
+          </span>
+        </div>
       </div>
     </aside>
   );

@@ -70,12 +70,24 @@ export const useAuthStore = create(
       setToken: (token) => set({ token }),
 
       /**
-       * Clear authentication session.
+       * Clear authentication session and invalidate cookies on backend and frontend.
        */
-      logout: () => {
-        if (typeof document !== 'undefined') {
+      logout: async () => {
+        if (typeof window !== 'undefined') {
+          try {
+            const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9080/api/v1';
+            await fetch(`${apiBase}/auth/logout`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+            });
+          } catch (e) {
+            // ignore network errors on logout
+          }
+
           document.cookie = 'delicious_token=; path=/; max-age=0';
           document.cookie = 'delicious_role=; path=/; max-age=0';
+          document.cookie = 'delicious_refresh_token=; path=/; max-age=0';
         }
         set({ user: null, token: null });
       },
