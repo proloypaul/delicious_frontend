@@ -78,17 +78,9 @@ function LoginForm() {
         message: `Welcome back, ${authData.name}! Logging you in...`,
       });
 
-      // Persist token and user in Zustand store
+      // Persist token and user in Zustand store (cookies are managed purely by backend Set-Cookie headers)
       if (authData.token) {
         setToken(authData.token);
-        // Also set cookie so Next.js Edge Middleware can inspect route access
-        if (typeof document !== 'undefined') {
-          document.cookie = `delicious_token=${authData.token}; path=/; max-age=604800; SameSite=Lax`;
-          document.cookie = `delicious_role=${authData.role}; path=/; max-age=604800; SameSite=Lax`;
-          if (authData.refreshToken) {
-            document.cookie = `delicious_refresh_token=${authData.refreshToken}; path=/; max-age=604800; SameSite=Lax`;
-          }
-        }
       }
       setUser(authData);
 

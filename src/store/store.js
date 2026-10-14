@@ -70,7 +70,7 @@ export const useAuthStore = create(
       setToken: (token) => set({ token }),
 
       /**
-       * Clear authentication session and invalidate cookies on backend and frontend.
+       * Clear authentication session and invalidate cookies exclusively via backend logout API.
        */
       logout: async () => {
         if (typeof window !== 'undefined') {
@@ -84,10 +84,6 @@ export const useAuthStore = create(
           } catch (e) {
             // ignore network errors on logout
           }
-
-          document.cookie = 'delicious_token=; path=/; max-age=0';
-          document.cookie = 'delicious_role=; path=/; max-age=0';
-          document.cookie = 'delicious_refresh_token=; path=/; max-age=0';
         }
         set({ user: null, token: null });
       },

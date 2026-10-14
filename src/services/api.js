@@ -121,12 +121,6 @@ api.interceptors.response.use(
           if (newAuthData) {
             useAuthStore.getState().setUser(newAuthData);
           }
-          if (typeof document !== 'undefined') {
-            document.cookie = `delicious_token=${newToken}; path=/; max-age=604800; SameSite=Lax`;
-            if (newAuthData?.role) {
-              document.cookie = `delicious_role=${newAuthData.role}; path=/; max-age=604800; SameSite=Lax`;
-            }
-          }
         }
 
         processQueue(null, newToken);
