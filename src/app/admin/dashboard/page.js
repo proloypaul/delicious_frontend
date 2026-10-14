@@ -11,6 +11,7 @@ import AdminSidebar from '@/components/admin/AdminSidebar';
 import AdminProductsTab from '@/components/admin/AdminProductsTab';
 import AdminCategoriesTab from '@/components/admin/AdminCategoriesTab';
 import AdminOrdersTab from '@/components/admin/AdminOrdersTab';
+import AdminCouponsTab from '@/components/admin/AdminCouponsTab';
 import { useAdminStore } from '@/store/store';
 
 export default function AdminDashboardPage() {
@@ -69,11 +70,13 @@ export default function AdminDashboardPage() {
             {activeTab === 'products' && 'Product Management'}
             {activeTab === 'categories' && 'Cuisine Category Setup'}
             {activeTab === 'orders' && 'Order Dispatch Desk'}
+            {activeTab === 'coupons' && 'Promotional Coupon Desk'}
           </h2>
           <p className="text-xs text-slate-500 font-semibold uppercase tracking-widest mt-0.5">
             {activeTab === 'products' && 'Track kitchen menu items, configure prices, and toggle approvals.'}
             {activeTab === 'categories' && 'Configure custom cuisine groupings and manage presentation visuals.'}
             {activeTab === 'orders' && 'Process customer orders, update rider updates, and review invoices.'}
+            {activeTab === 'coupons' && 'Create promo codes, configure minimum orders, and track active discounts.'}
           </p>
         </div>
 
@@ -102,6 +105,13 @@ export default function AdminDashboardPage() {
 
             {activeTab === 'orders' && (
               <AdminOrdersTab 
+                showSuccess={showSuccess} 
+                showError={showError} 
+              />
+            )}
+
+            {activeTab === 'coupons' && (
+              <AdminCouponsTab 
                 showSuccess={showSuccess} 
                 showError={showError} 
               />

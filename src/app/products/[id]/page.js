@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getProductById, getAllProducts } from '@/services/productApi';
 import { createReview, getReviewsByProduct } from '@/services/reviewApi';
-import { ArrowLeft, Clock, Star, Store, Plus, Minus, ShoppingBag, ShoppingCart, Heart, Tag, ChevronRight, MessageSquare, Send, Award, ThumbsUp } from 'lucide-react';
+import { ArrowLeft, Clock, Star, Store, Plus, Minus, ShoppingBag, ShoppingCart, Heart, Tag, ChevronLeft, ChevronRight, MessageSquare, Send, Award, ThumbsUp } from 'lucide-react';
 import Loader from '@/components/ui/Loader';
 import { useCartStore, useAuthStore } from '@/store/store';
 import Notification from '@/components/shared/Notification';
@@ -27,21 +27,35 @@ export default function ProductDetailsPage({ params }) {
   // Reviews integration states
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewMessage, setReviewMessage] = useState('');
+  const [reviewPage, setReviewPage] = useState(0);
+  const REVIEWS_PAGE_SIZE = 10;
 
   const queryClient = useQueryClient();
 
-  // Fetch product reviews
+  // Fetch product reviews (paginated, 10 per page)
   const { data: reviewsResponse, isLoading: isLoadingReviews } = useQuery({
-    queryKey: ['productReviews', productId],
-    queryFn: () => getReviewsByProduct(productId),
+    queryKey: ['productReviews', productId, reviewPage],
+    queryFn: () => getReviewsByProduct(productId, reviewPage, REVIEWS_PAGE_SIZE),
     enabled: !!productId,
+    keepPreviousData: true,
   });
 
-  const reviewsList = reviewsResponse?.data || [];
+  // Handle both Spring Page<ReviewResponse> and array fallback
+  const reviewsPageData = reviewsResponse?.data;
+  const reviewsList = Array.isArray(reviewsPageData) 
+    ? reviewsPageData 
+    : (reviewsPageData?.content || []);
   
-  const totalReviewsCount = reviewsList.length;
-  const averageRating = totalReviewsCount > 0
-    ? (reviewsList.reduce((acc, curr) => acc + curr.rating, 0) / totalReviewsCount).toFixed(1)
+  const totalReviewsCount = typeof reviewsPageData?.totalElements === 'number'
+    ? reviewsPageData.totalElements
+    : reviewsList.length;
+
+  const totalReviewPages = typeof reviewsPageData?.totalPages === 'number'
+    ? reviewsPageData.totalPages
+    : (reviewsList.length > 0 ? 1 : 0);
+  
+  const averageRating = reviewsList.length > 0
+    ? (reviewsList.reduce((acc, curr) => acc + curr.rating, 0) / reviewsList.length).toFixed(1)
     : '4.8';
 
   // Submit review mutation
@@ -49,6 +63,7 @@ export default function ProductDetailsPage({ params }) {
     mutationFn: (payload) => createReview(payload),
     onSuccess: () => {
       queryClient.invalidateQueries(['productReviews', productId]);
+      setReviewPage(0);
       setReviewMessage('');
       setReviewRating(5);
       setNotification({
@@ -414,6 +429,29 @@ export default function ProductDetailsPage({ params }) {
                     </div>
                   );
                 })}
+
+                {/* Review Pagination Controls */}
+                {totalReviewPages > 1 && (
+                  <div className="flex items-center justify-between pt-4 px-2">
+                    <button
+                      onClick={() => setReviewPage((prev) => Math.max(0, prev - 1))}
+                      disabled={reviewPage === 0}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-200 text-slate-700 text-xs font-bold uppercase rounded-xl disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors shadow-sm"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" /> Previous
+                    </button>
+                    <span className="text-xs font-extrabold text-slate-400 uppercase tracking-widest">
+                      Page {reviewPage + 1} of {totalReviewPages}
+                    </span>
+                    <button
+                      onClick={() => setReviewPage((prev) => Math.min(totalReviewPages - 1, prev + 1))}
+                      disabled={reviewPage >= totalReviewPages - 1}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-200 text-slate-700 text-xs font-bold uppercase rounded-xl disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors shadow-sm"
+                    >
+                      Next <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
